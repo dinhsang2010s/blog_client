@@ -17,9 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LoginSchema } from "@/schema";
 import { ILogin } from "@/schema/response";
-import { login_api } from "@/api/auth";
 import { useToast } from "@/components/ui/use-toast";
-import { useRouter } from "next/router";
+import { authApi } from "@/api-request";
+import { useRouter } from "next/navigation";
 
 const LoginForm = () => {
   const [loading, setLoading] = useState(false);
@@ -37,12 +37,24 @@ const LoginForm = () => {
   const onSubmit = async (data: ILogin) => {
     setLoading(true);
     try {
-      const token = await login_api(data);
-      if (token) {
-        router.push("/");
-      }
+      const res = await authApi.login(data);
+      await authApi.auth(res);
+      router.push("/");
+      toast({
+        variant: "success",
+        title: "Logged in Successfully",
+      });
     } catch (error: any) {
       setLoading(false);
+
+      const fields = ["name", "password"];
+      fields.forEach((e) => {
+        form.setError(e as "name" | "password", {
+          type: "server",
+          message: "",
+        });
+      });
+
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
